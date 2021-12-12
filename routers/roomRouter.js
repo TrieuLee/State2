@@ -1,7 +1,8 @@
 const router = require("express").Router();
 const Room = require("../models/roomModel");
+const auth = require("../middleware/auth");
 
-router.get("/", async (req,res) => {
+router.get("/",auth, async (req,res) => {
     try{
         const room = await Room.find();
         res.json(room);
@@ -11,7 +12,7 @@ router.get("/", async (req,res) => {
     }
 })
 
-router.post("/", async (req, res) => {
+router.post("/",auth, async (req, res) => {
     try{
         const {number,floor,price,note,state} = req.body;
 
@@ -27,7 +28,7 @@ router.post("/", async (req, res) => {
             return res.status(400).json({errorMessage:"Floor and Room was existed. Please change name or floor of room"});
     
         const newRoom = new Room({
-            number,floor,price,note,state
+            number,floor,price,note,state,user: req.user
         });
     
         const saveRoom = await newRoom.save();
@@ -39,7 +40,7 @@ router.post("/", async (req, res) => {
     }
 })
 
-router.put("/:id", async (req,res) => {
+router.put("/:id",auth, async (req,res) => {
     try{
 
         const {number, floor, price, note, state} = req.body;
@@ -58,10 +59,13 @@ router.put("/:id", async (req,res) => {
         if(originalNumberRoom)
             return res.status(400).json({errorMessage:"Floor and Room was existed. Please change name or floor of room"});
         
-            const originalRoom = await Room.findById(roomID);
+        const originalRoom = await Room.findById(roomID);
 
         if(!originalRoom) 
             return res.status(400).json({errorMessage:"Not Room with this ID was found. Please contact the developer"});
+
+        if(originalRoom.user.toString() !==req.user)
+            return res.status(401).json({errorMessage: "Unauthorized"});
 
         originalRoom.number = number;
         originalRoom.floor = floor;
@@ -78,7 +82,7 @@ router.put("/:id", async (req,res) => {
     }
 })
 
-router.delete("/:id", async (req, res) =>{
+router.delete("/:id",auth, async (req, res) =>{
     try{
         const roomID = req.params.id;
         //validation
@@ -91,6 +95,9 @@ router.delete("/:id", async (req, res) =>{
         if(!existingRoom) 
             return res.status(400).json({errorMessage:"Not Room with this ID was found. Please contact the developer"});
 
+        if(existingRoom.user.toString() !==req.user)
+            return res.status(401).json({errorMessage: "Unauthorized"});
+            
         await existingRoom.delete();
         res.json(existingRoom);
     }
