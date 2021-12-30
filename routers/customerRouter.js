@@ -1,112 +1,302 @@
 const router = require("express").Router();
-const Customer = require("../models/customerModel");
-const auth = require("../middleware/auth");
+const Guest = require("../models/customerModel");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const auth = require('../middleware/auth');
 
-router.get("/",auth, async (req,res) => {
+router.get("/", async (req,res) => {
     try{
-        console.log(req.user)
-        const cus = await Customer.find();
-        res.json(cus);
+        const staff = await Guest.find();
+        res.json(staff);
     }
     catch(err){
         res.status(500).send();
     }
 })
 
-router.post("/",auth, async (req, res) => {
+router.post("/", async (req, res) => {
     try{
-        const {name,phoneNumber,email,IDCard} = req.body;
+        const {name,phoneNumber,email,address,IDCard, password,passwordVerify} = req.body;
+        
+        // Validation
 
-        // Validate
-        //1- Điển đủ thông tin
-
-        if(!name||!phoneNumber||!email||!IDCard) {
-            return res.status(400).json({errorMessage: 'You need to enter all information'})
+        if(!name||!phoneNumber||!email||!address||!IDCard||!password||!passwordVerify) {
+            return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
         }
 
-        // 2- IDCard phải khác nhau
+        if(password.length <6){
+            return res.status(400).json({errorMessage: 'Mật khẩu ít nhất là 6 ký tự!'})
+        }
 
-        const originalIDCard = await Customer.findOne({IDCard});
-        if(originalIDCard)
-            return res.status(400).json({errorMessage:"IDCard was existed. Please change name or floor of room"});
-    
-        const newCus = new Customer({
-            name,phoneNumber,email,IDCard,user: req.user
+        if(password !==passwordVerify){
+            return res.status(400).json({errorMessage: 'Mật khẩu xác thực không trùng khớp!'});
+        }
+        const existingUser = await Guest.findOne({email})
+        if(existingUser){
+            return res.status(400).json({
+                errorMessage: 'Email đã được sử dụng. Hãy dùng email khác!'
+            })  
+        }
+
+        //hashPassword
+        
+        const salt = await bcrypt.genSalt();
+        const passwordHash = await bcrypt.hash(password, salt);
+        
+        const newGuest = new Guest({
+            name,phoneNumber,email,address,IDCard,passwordHash
         });
     
-        const saveCus = await newCus.save();
+        const saveGuest = await newGuest.save();
+
+        // create a JWT token
+
+        const token = jwt.sign({
+            id: saveGuest._id
+        }, process.env.JWT_SECRET) // id from mongdb + đuôi password generator
+
+        // tạo jsonwebtoken cho để lấy token cho user
+
+        res.cookie("token", token, { httpOnly: true}).send();
     
-        res.json(saveCus);
+        res.json(saveGuest);
     }
     catch(err){
         res.status(500).send();
     }
 })
 
-router.put("/:id",auth, async (req,res) => {
+router.put("/:id", async (req,res) => {
     try{
-
-        const {name,phoneNumber,email,IDCard} = req.body;
-        const cusID = req.params.id;
+        const {name,phoneNumber,address,IDCard} = req.body;
+        const guestID = req.params.id;
 
         //validation
 
-        if(!name||!phoneNumber||!email||!IDCard) {
-            return res.status(400).json({errorMessage: 'You need to enter all information'})
+        if(!name||!phoneNumber||!address||!IDCard) {
+            return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
         }
         
-        if(!cusID) 
-            return res.status(400).json({errorMessage:"Customer ID is not given. Please contact the developer"});
+        if(!guestID) 
+            return res.status(400).json({errorMessage:"Mã Nhân viên không xác định. Hãy liên hệ với nhà phát triển hệ thống của chúng tôi"});
+
+        const originalGuest = await Guest.findById(guestID);
         
-        // 2- IDCard phải khác nhau
+        if(!originalGuest) 
+            return res.status(400).json({errorMessage:"Không timf thấy ID này. Hãy liên hệ với nhà phát triển hệ thống của chúng tôi"});
 
-        const originalIDCard = await Customer.findOne({IDCard});
-        if(originalIDCard)
-            return res.status(400).json({errorMessage:"IDCard was existed. Please change name or floor of room"});
-    
-        const originalCus = await Customer.findById(cusID);
+        originalGuest.name = name;
+        originalGuest.phoneNumber = phoneNumber;
+        originalGuest.address = address;
+        originalGuest.IDCard = IDCard;
+        
+        const savedGuest = await originalGuest.save();
 
-        if(!originalCus) 
-            return res.status(400).json({errorMessage:"Not Customer with this ID was found. Please contact the developer"});
-
-        if(originalCus.user.toString() !==req.user)
-            return res.status(401).json({errorMessage: "Unauthorized"});
-
-        originalCus.name = name;
-        originalCus.phoneNumber = phoneNumber;
-        originalCus.email = email;
-        originalCus.IDCard = IDCard;
-        originalCus.user = req.user;
-
-        const savedCus = await originalCus.save();
-
-        res.json(savedCus);
+        res.json(savedGuest);
     }
     catch(err){
         res.status(500).send();
     }
 })
 
-router.delete("/:id",auth, async (req, res) =>{
+router.delete("/:id", async (req, res) =>{
     try{
-        const cusID = req.params.id;
+        const guestID = req.params.id;
         //validation
         
-        if(!cusID) 
-            return res.status(400).json({errorMessage:"Customer ID is not given. Please contact the developer"});
+        if(!guestID) 
+            return res.status(400).json({errorMessage:"Mã khách hàng không xác định. Hãy liên hệ với nhà phát triển hệ thống của chúng tôi"});
         
-        const existingCus = await Customer.findById(cusID);
+            const existingGuest = await Guest.findById(guestID);
 
-        if(!existingCus) 
-            return res.status(400).json({errorMessage:"Not Customer with this ID was found. Please contact the developer"});
+        if(!existingGuest) 
+            return res.status(400).json({errorMessage:"Không tìm thấy ID khách hàng. Hãy liên hệ với nhà phát triển hệ thống của chúng tôi"});
 
-        if(existingCus.user.toString() !==req.user)
-            return res.status(401).json({errorMessage: "Unauthorized"});
-            
-        await existingCus.delete();
-        res.json(existingCus);
+        await existingGuest.delete();
+        res.json(existingGuest);
     }
     catch(err){
+        res.status(500).send();
+    }
+})
+
+router.post("/login", async (req, res) => {
+    try{
+        const {email,password} = req.body;
+        
+        // Validation
+
+        if(!email || !password) {
+            return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
+        }
+
+        if(password.length <6){
+            return res.status(400).json({errorMessage: 'Mật khẩu ít nhất là 6 ký tự!'})
+        }
+
+        // get account
+
+        const existingUser = await Guest.findOne({email})
+        if(!existingUser){
+            return res.status(400).json({
+                errorMessage: 'Sai tài khoản hoặc mật khẩu. Vui lòng nhập lại.'
+            })  
+        }
+
+        const correctPassword = await bcrypt.compare(password,existingUser.passwordHash);
+
+        if(!correctPassword){
+            return res.status(400).json({
+                errorMessage: 'Sai tài khoản hoặc mật khẩu. Vui lòng nhập lại.'
+            })  
+        }
+
+        // create a JWT token
+
+        const token = jwt.sign({
+            id: existingUser._id
+        }, process.env.JWT_SECRET) // id from mongdb + đuôi password generator
+
+        // tạo jsonwebtoken cho để lấy token cho user
+
+        res.cookie("token", token, { httpOnly: true}).send();
+    
+        
+    }
+    catch(err){
+        res.status(500).send();
+    }
+})
+
+router.get("/loggedIn", async(req, res) => {
+    try{
+        const token = req.cookies.token;
+        if(!token) return res.json(null);
+
+        const validatedUser = jwt.verify(token, process.env.JWT_SECRET);
+
+        const user = await Guest.findById(validatedUser.id);
+
+        res.json(user);
+    }
+    catch(err){
+        return res.json(null);
+    }
+})
+
+router.get("/logOut", (req,res) =>{
+    try{
+        res.clearCookie("token").send();
+    }
+    catch (err){
+        return res.json(null)
+    }
+})
+
+router.put("/change/password", auth, async (req, res) => {
+    try{
+        const {email, password, newPassword} = req.body;
+        // Validation
+
+        if(!email || !password ||!newPassword){
+            return res.status(400).json({
+                errorMessage: 'Bạn phải điền đầy đủ các thông tin!'
+            });
+        }
+
+        if(password === newPassword){
+            return res.status(400).json({
+                errorMessage: 'Mật khẩu mới trùng khớp với mật khẩu hiện tại'
+            });
+        }
+
+        if(newPassword.length < 6){
+            return res.status(400).json({
+                errorMessage: 'Mật khẩu ít nhất có độ dài 6 ký tự'
+            });
+        }
+
+        const existingUser = await Guest.findById(req.user.toString());
+
+        if(!existingUser) {
+            return res.status(400).json({
+                errorMessage: 'Không tìm thấy ID Khách Hàng. Hãy liên hệ với nhà phát triển hệ thống của chúng tôi'
+            });
+        }
+
+        if(existingUser.email !== email){
+            return res.status(401).json({
+                errorMessage: 'Sai tài khoản hoặc mật khẩu'
+            });
+        } 
+        
+        const correctPassword = await bcrypt.compare(password,existingUser.passwordHash);
+
+        if(!correctPassword){
+            return res.status(401).json({
+                errorMessage: 'Sai tài khoản hoặc mật khẩu'
+            });
+        }
+
+        // hash the password
+
+        const salt = await bcrypt.genSalt();
+        const passwordHash = await bcrypt.hash(newPassword, salt);
+
+        // update the user in the database
+
+        existingUser.passwordHash = passwordHash;
+
+        const savedUser = await existingUser.save();
+        
+        // create the JWT token
+
+        const token = jwt.sign({
+            id: savedUser._id
+        }, process.env.JWT_SECRET) // id from mongdb + đuôi password generator
+
+        // tạo jsonwebtoken cho để lấy token cho user
+
+        res.cookie("token", token, { httpOnly: true}).send();      
+    }
+    catch (err) {
+        res.status(500).send();
+    }
+})
+
+router.put("/reset/password", auth, async (req, res) => {
+    try{
+        
+        const existingUser = await Guest.findById(req.user.toString());
+
+        if(!existingUser) {
+            return res.status(400).json({
+                errorMessage: 'Không tìm thấy ID Khách Hàng. Hãy liên hệ với nhà phát triển hệ thống của chúng tôi'
+            });
+        }
+
+        // hash the password
+
+        const salt = await bcrypt.genSalt();
+        const passwordHash = await bcrypt.hash("123456", salt);
+
+        // update the user in the database
+
+        existingUser.passwordHash = passwordHash;
+
+        const savedUser = await existingUser.save();
+        
+        // create the JWT token
+
+        const token = jwt.sign({
+            id: savedUser._id
+        }, process.env.JWT_SECRET) // id from mongdb + đuôi password generator
+
+        // tạo jsonwebtoken cho để lấy token cho user
+
+        res.cookie("token", token, { httpOnly: true}).send();      
+    }
+    catch (err) {
         res.status(500).send();
     }
 })

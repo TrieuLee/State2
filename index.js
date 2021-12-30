@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
 
 dotenv.config();
 
@@ -12,6 +13,12 @@ const app = express();
 app.use(express.json());
 
 app.use(cookieParser());
+
+app.use(cors({
+    origin: "http://localhost:3000",
+    credentials:true,
+})
+);
 
 app.listen(5000, () =>console.log("Server is starting at port 5000"));
 
@@ -25,6 +32,7 @@ app.use("/staff",require("./routers/staffRouter"));
 app.use("/room",require("./routers/roomRouter"));
 app.use("/customer",require("./routers/customerRouter")); 
 app.use("/bookRoom",require("./routers/bookRoomRouter")); 
+app.use("/service",require("./routers/serviceRouter")); 
 
 // connect to mongoDB 
 

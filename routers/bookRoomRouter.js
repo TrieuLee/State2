@@ -6,7 +6,6 @@ const auth = require("../middleware/auth");
 
 router.get("/",auth, async (req,res) => {
     try{
-        console.log(req.user)
         const bRoom = await BookRoom.find();
         res.json(bRoom);
     }
@@ -23,7 +22,7 @@ router.post("/",auth, async (req, res) => {
         //1- Điển đủ thông tin
 
         if(!typeOfRoom||!checkIn||!checkOut||!IDRoom||!IDCus) {
-            return res.status(400).json({errorMessage: 'You need to enter all information'})
+            return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
         }
 
         // 2- Kiểm tra Mã Phòng có Tồn Tại Hay Không
@@ -67,7 +66,7 @@ router.put("/:id",auth, async (req,res) => {
         //1- Điển đủ thông tin
 
         if(!typeOfRoom||!checkIn||!checkOut||!IDRoom||!IDCus) {
-            return res.status(400).json({errorMessage: 'You need to enter all information'})
+            return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
         }
 
         // 2- Kiểm tra Mã Phòng có Tồn Tại Hay Không

@@ -10,9 +10,6 @@ function auth(req, res, next){
     }
     catch(err){
         return res.status(401).json({errorMessage: "Unauthorized"});
-    }
-    
-
-    
+    }    
 }
 module.exports = auth

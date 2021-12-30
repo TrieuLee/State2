@@ -7,7 +7,8 @@ const roomSchema = new mongoose.Schema({
     floor: {type: Number, required: true},// tầng 
     price: {type: Number, required: true},//giá
     note: {type: String, required: true},// ghi chú
-    state: {type: Boolean, required: true},// tình trạng phòng
+    state: {type: Boolean, required: true},// tình trạng phòng true- thuê false - ko thuê
+    typeofRoom: {type: String, required: true},// Loại phòng
     user:{type: ObjectId, required: true},
 },{
     timestamps:true

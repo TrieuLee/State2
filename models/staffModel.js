@@ -8,7 +8,7 @@ const staffSchema = new mongoose.Schema({
     nameOfRoom: {type: String, required: true},// tên phòng ban
     salary: {type: Number, required: true},// lương
     passwordHash: {type: String, required: true},//mật khẩu
-
+    decentralize:{type:Number,required:true},//
 },{
     timestamps:true
 });
