@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const Service = require("../models/serviceModel");
 const auth = require("../middleware/auth");
+const BookService = require("../models/bookServiceModel");
 
 router.get("/",auth, async (req,res) => {
     try{

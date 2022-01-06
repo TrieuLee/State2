@@ -6,37 +6,32 @@ const auth = require("../middleware/auth");
 
 router.get("/",auth, async (req,res) => {
     try{
-        const bRoom = await BookRoom.find();
+        const user = req.user;
+        const bRoom = await BookRoom.find({idCustomer:user});
+        if(!bRoom) return res.status(400).json({errorMessage: 'Bạn chưa đặt phòng. Hãy đặt phòng để tiếp tục.'})
+        
         res.json(bRoom);
     }
     catch(err){
-        res.status(500).send();
+        res.status(500).send(err);
     }
 })
 
 router.post("/",auth, async (req, res) => {
     try{
-        const {typeOfRoom,checkIn,checkOut,IDRoom,IDCus} = req.body;
-
+        const {checkIn,checkOut,IDRoom,number,floor,price,note,typeofRoom} = req.body;
         // Validate
         //1- Điển đủ thông tin
 
-        if(!typeOfRoom||!checkIn||!checkOut||!IDRoom||!IDCus) {
+        if(!checkIn || !checkOut || !IDRoom ||  !number || !floor || !price || !note || !typeofRoom) {
             return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
         }
 
         // 2- Kiểm tra Mã Phòng có Tồn Tại Hay Không
 
-        const existedRoom = await Room.findById({IDRoom});
+        const existedRoom = await Room.findById({_id:IDRoom});
         if(!existedRoom)
             return res.status(400).json({errorMessage:"IDRoom is not existed"});
-        
-        //4- Mã Khách Hàng có Tồn Tại Không
-
-        const existedCus = await Customer.findById({IDCus});
-        if(!existedCus)
-            return res.status(400).json({errorMessage:"IDCus is not existed"});
-        
 
         // 3- Phòng chưa được dùng
 
@@ -44,28 +39,32 @@ router.post("/",auth, async (req, res) => {
             return res.status(400).json({errorMessage:"Room is busy. Please choose another Room"});
     
         const newBook = new BookRoom({
-            typeOfRoom,checkIn,checkOut,IDRoom,IDCus,user: req.user
+            checkIn,checkOut,IDRoom,number,floor,price,note,typeofRoom,stateGiveMoney:false,idCustomer: req.user
         });
-    
+        
         const saveBookRoom = await newBook.save();
-    
+        
+        existedRoom.state = true;
+
+        const savedRoom = await existedRoom.save();
+
         res.json(saveBookRoom);
     }
     catch(err){
-        res.status(500).send();
+        res.status(500).send(err);
     }
 })
 
 router.put("/:id",auth, async (req,res) => {
     try{
 
-        const {typeOfRoom,checkIn,checkOut,IDRoom,IDCus} = req.body;
+        const {checkIn,checkOut,IDRoom,number,floor,price,note,typeofRoom} = req.body;
         
         const bRoomID = req.params.id;
         // Validate
         //1- Điển đủ thông tin
 
-        if(!typeOfRoom||!checkIn||!checkOut||!IDRoom||!IDCus) {
+        if(!checkIn || !checkOut || !IDRoom ||  !number || !floor || !price || !note || !typeofRoom) {
             return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
         }
 
@@ -74,12 +73,6 @@ router.put("/:id",auth, async (req,res) => {
         const existedRoom = await Room.findById({IDRoom});
         if(!existedRoom)
             return res.status(400).json({errorMessage:"IDRoom is not existed"});
-        
-        //4- Mã Khách Hàng có Tồn Tại Không
-
-        const existedCus = await Customer.findById({IDCus});
-        if(!existedCus)
-            return res.status(400).json({errorMessage:"IDCus is not existed"});
         
 
         // 3- Phòng chưa được dùng
@@ -92,15 +85,17 @@ router.put("/:id",auth, async (req,res) => {
         if(!originalBRoom) 
             return res.status(400).json({errorMessage:"Not Booking Room with this ID was found. Please contact the developer"});
 
-        if(originalBRoom.user.toString() !==req.user)
+        if(originalBRoom.idCustomer.toString() !==req.user)
             return res.status(401).json({errorMessage: "Unauthorized"});
 
-        originalBRoom.typeOfRoom = typeOfRoom;
         originalBRoom.checkIn = checkIn;
         originalBRoom.checkOut = checkOut;
         originalBRoom.IDRoom = IDRoom;
-        originalBRoom.IDCus = IDCus;
-        originalBRoom.user = req.user;
+        originalBRoom.number = number;
+        originalBRoom.floor = floor;
+        originalBRoom.price = price;
+        originalBRoom.note = note;
+        originalBRoom.typeofRoom = typeofRoom;
 
         const savedBRoom = await originalBRoom.save();
 
@@ -108,6 +103,40 @@ router.put("/:id",auth, async (req,res) => {
     }
     catch(err){
         res.status(500).send();
+    }
+})
+
+router.put("/payBill/:id",auth, async (req,res) => {
+    try{
+
+        
+        const bRoomID = req.params.id;        
+
+        // 3- Phòng chưa được dùng
+    
+        const originalBRoom = await BookRoom.findById(bRoomID);
+
+        if(!originalBRoom) 
+            return res.status(400).json({errorMessage:"Not Booking Room with this ID was found. Please contact the developer"});
+
+        if(originalBRoom.idCustomer.toString() !==req.user)
+            return res.status(401).json({errorMessage: "Unauthorized"});
+
+        const existedRoom = await Room.findById({_id:originalBRoom.IDRoom});
+        if(!existedRoom)
+            return res.status(400).json({errorMessage:"IDRoom is not existed"});
+    
+
+        originalBRoom.stateGiveMoney = true;
+        existedRoom.state=false;
+
+        const savedBRoom = await originalBRoom.save();
+        const savedRoom = await existedRoom.save();
+
+        res.json({savedBRoom, savedRoom});
+    }
+    catch(err){
+        res.status(500).send(err);
     }
 })
 
@@ -124,7 +153,7 @@ router.delete("/:id",auth, async (req, res) =>{
         if(!existingBRoom) 
             return res.status(400).json({errorMessage:"Not Customer with this ID was found. Please contact the developer"});
 
-        if(existingBRoom.user.toString() !==req.user)
+        if(existingBRoom.idCustomer.toString() !==req.user)
             return res.status(401).json({errorMessage: "Unauthorized"});
             
         await existingBRoom.delete();

@@ -123,7 +123,6 @@ router.delete("/:id", async (req, res) =>{
 router.post("/login", async (req, res) => {
     try{
         const {email,password} = req.body;
-        
         // Validation
 
         if(!email || !password) {
@@ -176,7 +175,6 @@ router.get("/loggedIn", async(req, res) => {
         const validatedUser = jwt.verify(token, process.env.JWT_SECRET);
 
         const user = await Guest.findById(validatedUser.id);
-
         res.json(user);
     }
     catch(err){

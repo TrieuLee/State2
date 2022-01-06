@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000","http://localhost:3001"],
     credentials:true,
 })
 );
@@ -33,6 +33,7 @@ app.use("/room",require("./routers/roomRouter"));
 app.use("/customer",require("./routers/customerRouter")); 
 app.use("/bookRoom",require("./routers/bookRoomRouter")); 
 app.use("/service",require("./routers/serviceRouter")); 
+app.use("/bookService",require("./routers/bookServiceRouter")); 
 
 // connect to mongoDB 
 
