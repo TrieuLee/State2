@@ -6,7 +6,12 @@ const bookServiceSchema = new mongoose.Schema({
     quantity: {type: Number, required: true},
     user:{type: ObjectId, required: true},
     name: {type: String, required: true},// tên
-    price: {type: Number, required: true}//giá
+    price: {type: Number, required: true},//giá
+    nameCus: {type: String, required: true},// tên
+    phoneNumber: {type: String, required: true},// số điện thoại 
+    email: {type: String, required: true},//email
+    address:{type: String, required: true},// SDT
+    IDCard: {type: String, required: true} ,// CCCD/CMND
 },{
     timestamps:true
 });

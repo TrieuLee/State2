@@ -13,7 +13,6 @@ router.get("/", async (req,res) => {
         res.status(500).send();
     }
 })
-
 router.post("/", async (req, res) => {
     try{
         const {name,phoneNumber,email,address,IDCard, password,passwordVerify} = req.body;

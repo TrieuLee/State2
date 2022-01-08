@@ -17,13 +17,23 @@ router.get("/",auth, async (req,res) => {
     }
 })
 
+router.get("/manager",auth, async (req,res) => {
+    try{
+        const bRoom = await BookRoom.find({});       
+        res.json(bRoom);
+    }
+    catch(err){
+        res.status(500).send(err);
+    }
+})
+
 router.post("/",auth, async (req, res) => {
     try{
-        const {checkIn,checkOut,IDRoom,number,floor,price,note,typeofRoom} = req.body;
+        const {checkIn,checkOut,IDRoom,number,floor,price,note,typeofRoom,name,phoneNumber,email,address,IDCard} = req.body;
         // Validate
         //1- Điển đủ thông tin
 
-        if(!checkIn || !checkOut || !IDRoom ||  !number || !floor || !price || !note || !typeofRoom) {
+        if(!checkIn || !checkOut || !IDRoom ||  !number || !floor || !price || !note || !typeofRoom || !name || !phoneNumber || !email || !address || !IDCard) {
             return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
         }
 
@@ -39,7 +49,7 @@ router.post("/",auth, async (req, res) => {
             return res.status(400).json({errorMessage:"Room is busy. Please choose another Room"});
     
         const newBook = new BookRoom({
-            checkIn,checkOut,IDRoom,number,floor,price,note,typeofRoom,stateGiveMoney:false,idCustomer: req.user
+            checkIn,checkOut,IDRoom,number,floor,price,note,name,phoneNumber,email,address,IDCard,typeofRoom,stateGiveMoney:false,idCustomer: req.user
         });
         
         const saveBookRoom = await newBook.save();
@@ -58,13 +68,13 @@ router.post("/",auth, async (req, res) => {
 router.put("/:id",auth, async (req,res) => {
     try{
 
-        const {checkIn,checkOut,IDRoom,number,floor,price,note,typeofRoom} = req.body;
+        const {checkIn,checkOut,IDRoom,number,floor,price,note,typeofRoom,name,phoneNumber,email,address,IDCard} = req.body;
         
         const bRoomID = req.params.id;
         // Validate
         //1- Điển đủ thông tin
 
-        if(!checkIn || !checkOut || !IDRoom ||  !number || !floor || !price || !note || !typeofRoom) {
+        if(!checkIn || !checkOut || !IDRoom ||  !number || !floor || !price || !note || !typeofRoom || !name || !phoneNumber || !email || !address || !IDCard) {
             return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
         }
 
@@ -95,7 +105,12 @@ router.put("/:id",auth, async (req,res) => {
         originalBRoom.floor = floor;
         originalBRoom.price = price;
         originalBRoom.note = note;
+        originalBRoom.name = name;
         originalBRoom.typeofRoom = typeofRoom;
+        originalBRoom.phoneNumber = phoneNumber;
+        originalBRoom.email = email;
+        originalBRoom.address = address;
+        originalBRoom.IDCard = IDCard;
 
         const savedBRoom = await originalBRoom.save();
 

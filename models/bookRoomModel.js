@@ -11,6 +11,11 @@ const bookRoomSchema = new mongoose.Schema({
     typeofRoom: {type: String, required: true},
     stateGiveMoney: {type: Boolean, required: true},
     idCustomer:{type: ObjectId, required: true},
+    name: {type: String, required: true},// tên
+    phoneNumber: {type: String, required: true},// số điện thoại 
+    email: {type: String, required: true},//email
+    address:{type: String, required: true},// SDT
+    IDCard: {type: String, required: true} ,
 },{
     timestamps:true
 });
