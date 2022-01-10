@@ -15,6 +15,17 @@ router.get("/",auth, async (req,res) => {
     }
 })
 
+router.get("/:id",auth, async (req,res) => {
+    try{
+        const user = req.params.id;
+        const bService = await BookService.find({user:user});
+        res.json(bService);
+    }
+    catch(err){
+        res.status(500).send();
+    }
+})
+
 router.get("/manager",auth, async (req,res) => {
     try{
         const bRoom = await BookService.find();       
@@ -141,6 +152,30 @@ router.put("/:id",auth, async (req,res) => {
 })
 
 router.put("/payService/:id",auth, async (req,res) => {
+    try{
+  
+        const bRoomID = req.params.id;      
+
+        // 3- Phòng chưa được dùng
+    
+        const originalBRoom = await BookService.findById({_id:bRoomID});
+
+
+        if(!originalBRoom) 
+            return res.status(400).json({errorMessage:"Not Booking Room with this ID was found. Please contact the developer"});
+    
+        originalBRoom.state = true;
+
+        const savedBRoom = await originalBRoom.save();
+
+        res.json(savedBRoom);
+    }
+    catch(err){
+        res.status(505).send(err);
+    }
+})
+
+router.put("/payService/manager/:id",auth, async (req,res) => {
     try{
   
         const bRoomID = req.params.id;      

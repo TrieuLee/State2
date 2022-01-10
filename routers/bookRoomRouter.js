@@ -17,6 +17,19 @@ router.get("/",auth, async (req,res) => {
     }
 })
 
+router.get("/:id",auth, async (req,res) => {
+    try{
+        const user = req.params.id;
+        const bRoom = await BookRoom.find({idCustomer:user});
+        if(!bRoom) return res.status(400).json({errorMessage: 'Bạn chưa đặt phòng. Hãy đặt phòng để tiếp tục.'})
+        
+        res.json(bRoom);
+    }
+    catch(err){
+        res.status(500).send(err);
+    }
+})
+
 router.get("/manager",auth, async (req,res) => {
     try{
         const bRoom = await BookRoom.find({});       
@@ -171,9 +184,39 @@ router.put("/payBill/:id",auth, async (req,res) => {
 
         if(!originalBRoom) 
             return res.status(400).json({errorMessage:"Not Booking Room with this ID was found. Please contact the developer"});
-
         if(originalBRoom.idCustomer.toString() !==req.user)
             return res.status(401).json({errorMessage: "Unauthorized"});
+
+        const existedRoom = await Room.findById({_id:originalBRoom.IDRoom});
+        if(!existedRoom)
+            return res.status(400).json({errorMessage:"IDRoom is not existed"});
+    
+
+        originalBRoom.stateGiveMoney = true;
+        existedRoom.state=false;
+
+        const savedBRoom = await originalBRoom.save();
+        const savedRoom = await existedRoom.save();
+
+        res.json({savedBRoom, savedRoom});
+    }
+    catch(err){
+        res.status(500).send(err);
+    }
+})
+
+router.put("/payBill/manager/:id",auth, async (req,res) => {
+    try{
+
+        
+        const bRoomID = req.params.id;        
+
+        // 3- Phòng chưa được dùng
+    
+        const originalBRoom = await BookRoom.findById(bRoomID);
+
+        if(!originalBRoom) 
+            return res.status(400).json({errorMessage:"Not Booking Room with this ID was found. Please contact the developer"});
 
         const existedRoom = await Room.findById({_id:originalBRoom.IDRoom});
         if(!existedRoom)
