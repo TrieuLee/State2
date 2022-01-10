@@ -12,6 +12,8 @@ const bookServiceSchema = new mongoose.Schema({
     email: {type: String, required: true},//email
     address:{type: String, required: true},// SDT
     IDCard: {type: String, required: true} ,// CCCD/CMND
+    unit: {type: String, required: true} ,// CCCD/CMND
+    
 },{
     timestamps:true
 });

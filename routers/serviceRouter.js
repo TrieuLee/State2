@@ -15,18 +15,18 @@ router.get("/",auth, async (req,res) => {
 
 router.post("/",auth, async (req, res) => {
     try{
-        const {name,price} = req.body;
+        const {name,price,unit} = req.body;
     
         // Validate
         //1- Điển đủ thông tin 
-        if(name===undefined||price===undefined) {
+        if(name===undefined|| price===undefined || unit===undefined) {
             return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
         }
 
         // 2- Số vs floor phải khác nhau
    
         const newService = new Service({
-            name,price
+            name,price, unit
         });
     
         const saveService = await newService.save();
@@ -41,8 +41,7 @@ router.post("/",auth, async (req, res) => {
 router.put("/:id",auth, async (req,res) => {
     try{
 
-        const {name, price} = req.body;
-        console.log(name,price);
+        const {name, price, unit} = req.body;
         const serviceID = req.params.id;
 
         //validation
@@ -61,6 +60,7 @@ router.put("/:id",auth, async (req,res) => {
 
         originalService.name = name;
         originalService.price = price;
+        originalService.unit = unit;
         const savedService = await originalService.save();
 
         res.json(savedService);

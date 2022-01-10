@@ -38,11 +38,11 @@ router.get("/manager",auth, async (req,res) => {
 
 router.post("/",auth, async (req, res) => {
     try{
-        const {quantity,IDService,name,price, nameCus, phoneNumber, email, address, IDCard} = req.body;
+        const {quantity,IDService,name,price, nameCus, phoneNumber, email, address, IDCard, unit} = req.body;
         // Validate
         //1- Điển đủ thông tin
 
-        if(!quantity || !IDService || !name || !price || !nameCus|| !phoneNumber || !email || !address || !IDCard) {
+        if(!unit ||!quantity || !IDService || !name || !price || !nameCus|| !phoneNumber || !email || !address || !IDCard) {
             return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
         }
 
@@ -55,7 +55,7 @@ router.post("/",auth, async (req, res) => {
         // 3- Phòng chưa được dùng
 
         const newBook = new BookService({
-            quantity,IDService,name,price,state:false,user: req.user, nameCus, phoneNumber, email, address, IDCard
+            unit,quantity,IDService,name,price,state:false,user: req.user, nameCus, phoneNumber, email, address, IDCard
         });
         
         const saveBookService = await newBook.save();
@@ -70,11 +70,11 @@ router.post("/",auth, async (req, res) => {
 
 router.post("/directionService",auth, async (req, res) => {
     try{
-        const {quantity,IDService,name,price,IDUser, nameCus, phoneNumber, email, address, IDCard} = req.body;
+        const {unit,quantity,IDService,name,price,IDUser, nameCus, phoneNumber, email, address, IDCard} = req.body;
         // Validate
         //1- Điển đủ thông tin
 
-        if(!quantity || !IDService || !name || !price || !IDUser|| !nameCus|| !phoneNumber || !email || !address || !IDCard) {
+        if(!unit || !quantity || !IDService || !name || !price || !IDUser|| !nameCus|| !phoneNumber || !email || !address || !IDCard) {
             return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
         }
 
@@ -87,7 +87,7 @@ router.post("/directionService",auth, async (req, res) => {
         // 3- Phòng chưa được dùng
 
         const newBook = new BookService({
-            quantity,IDService,name,price,state:false,user: IDUser, nameCus, phoneNumber, email, address, IDCard
+            unit,quantity,IDService,name,price,state:false,user: IDUser, nameCus, phoneNumber, email, address, IDCard
         });
         
         const saveBookService = await newBook.save();
@@ -103,14 +103,14 @@ router.post("/directionService",auth, async (req, res) => {
 router.put("/:id",auth, async (req,res) => {
     try{
 
-        const {quantity,IDService,name,price, nameCus, phoneNumber, email, address, IDcard} = req.body;
+        const {unit, quantity,IDService,name,price, nameCus, phoneNumber, email, address, IDcard} = req.body;
         
         
         const bRoomID = req.params.id;
         // Validate
         //1- Điển đủ thông tin
 
-        if(!quantity || !IDService || !name || !price || !nameCus|| !phoneNumber || !email || !address || !IDcard) {
+        if(!unit||!quantity || !IDService || !name || !price || !nameCus|| !phoneNumber || !email || !address || !IDcard) {
             return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
         }
 
@@ -141,6 +141,7 @@ router.put("/:id",auth, async (req,res) => {
         originalBRoom.email = email;
         originalBRoom.address = address;
         originalBRoom.IDcard = IDcard;
+        originalBRoom.unit = unit;
 
         const savedBRoom = await originalBRoom.save();
 
