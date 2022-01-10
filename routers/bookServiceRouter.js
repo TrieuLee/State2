@@ -28,7 +28,6 @@ router.get("/manager",auth, async (req,res) => {
 router.post("/",auth, async (req, res) => {
     try{
         const {quantity,IDService,name,price, nameCus, phoneNumber, email, address, IDCard} = req.body;
-        console.log({quantity,IDService,name,price, nameCus, phoneNumber, email, address, IDcard: IDCard});
         // Validate
         //1- Điển đủ thông tin
 
@@ -46,6 +45,38 @@ router.post("/",auth, async (req, res) => {
 
         const newBook = new BookService({
             quantity,IDService,name,price,state:false,user: req.user, nameCus, phoneNumber, email, address, IDCard
+        });
+        
+        const saveBookService = await newBook.save();
+
+        res.json(saveBookService);
+    }
+    catch(err){
+        console.log(err);
+        res.status(500).send(err);
+    }
+})
+
+router.post("/directionService",auth, async (req, res) => {
+    try{
+        const {quantity,IDService,name,price,IDUser, nameCus, phoneNumber, email, address, IDCard} = req.body;
+        // Validate
+        //1- Điển đủ thông tin
+
+        if(!quantity || !IDService || !name || !price || !IDUser|| !nameCus|| !phoneNumber || !email || !address || !IDCard) {
+            return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
+        }
+
+        // 2- Kiểm tra Mã dịch vụ có Tồn Tại Hay Không
+
+        const existedService = await Service.findById({_id:IDService});
+        if(!existedService)
+            return res.status(400).json({errorMessage:"Dịch vụ này không tồn tại"});
+
+        // 3- Phòng chưa được dùng
+
+        const newBook = new BookService({
+            quantity,IDService,name,price,state:false,user: IDUser, nameCus, phoneNumber, email, address, IDCard
         });
         
         const saveBookService = await newBook.save();

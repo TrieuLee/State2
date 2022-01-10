@@ -192,10 +192,11 @@ router.get("/logOut", (req,res) =>{
 
 router.put("/change/password", auth, async (req, res) => {
     try{
-        const {email, password, newPassword} = req.body;
+        const {email, password, newPassword,passwordVerify} = req.body;
+        
         // Validation
 
-        if(!email || !password ||!newPassword){
+        if(!email || !password ||!newPassword || !passwordVerify){
             return res.status(400).json({
                 errorMessage: 'Bạn phải điền đầy đủ các thông tin!'
             });
@@ -204,6 +205,12 @@ router.put("/change/password", auth, async (req, res) => {
         if(password === newPassword){
             return res.status(400).json({
                 errorMessage: 'Mật khẩu mới trùng khớp với mật khẩu hiện tại'
+            });
+        }
+
+        if(passwordVerify !== newPassword){
+            return res.status(400).json({
+                errorMessage: 'Xác thực mật khẩu sai'
             });
         }
 

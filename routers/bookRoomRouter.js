@@ -41,6 +41,44 @@ router.post("/",auth, async (req, res) => {
 
         const existedRoom = await Room.findById({_id:IDRoom});
         if(!existedRoom)
+            return res.status(400).json({errorMessage:"Mã phòng không tồn tại. Vui lòng liên hệ lập tình viên của chúng tôi"});
+
+        // 3- Phòng chưa được dùng
+
+        if(existedRoom.state===true)
+            return res.status(400).json({errorMessage:"Phòng đang bận. Vui lòng chọn phòng khác"});
+    
+        const newBook = new BookRoom({
+            checkIn,checkOut,IDRoom,number,floor,price,note,name,phoneNumber,email,address,IDCard,typeofRoom,stateGiveMoney:false,idCustomer: req.user
+        });
+        
+        const saveBookRoom = await newBook.save();
+        
+        existedRoom.state = true;
+
+        const savedRoom = await existedRoom.save();
+
+        res.json(saveBookRoom);
+    }
+    catch(err){
+        res.status(500).send(err);
+    }
+})
+
+router.post("/directionRoom",auth, async (req, res) => {
+    try{
+        const {checkIn,checkOut,IDRoom,IDGuest,number,floor,price,note,typeofRoom,name,phoneNumber,email,address,IDCard} = req.body;
+        // Validate
+        //1- Điển đủ thông tin
+
+        if(!checkIn || !checkOut || !IDRoom || !IDGuest ||  !number || !floor || !price || !note || !typeofRoom || !name || !phoneNumber || !email || !address || !IDCard) {
+            return res.status(400).json({errorMessage: 'Bạn phải điền đầy đủ các thông tin!'})
+        }
+
+        // 2- Kiểm tra Mã Phòng có Tồn Tại Hay Không
+
+        const existedRoom = await Room.findById({_id:IDRoom});
+        if(!existedRoom)
             return res.status(400).json({errorMessage:"IDRoom is not existed"});
 
         // 3- Phòng chưa được dùng
@@ -49,7 +87,7 @@ router.post("/",auth, async (req, res) => {
             return res.status(400).json({errorMessage:"Room is busy. Please choose another Room"});
     
         const newBook = new BookRoom({
-            checkIn,checkOut,IDRoom,number,floor,price,note,name,phoneNumber,email,address,IDCard,typeofRoom,stateGiveMoney:false,idCustomer: req.user
+            checkIn,checkOut,IDRoom,number,floor,price,note,name,phoneNumber,email,address,IDCard,typeofRoom,stateGiveMoney:false,idCustomer: IDGuest
         });
         
         const saveBookRoom = await newBook.save();
