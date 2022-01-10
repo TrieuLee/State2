@@ -26,7 +26,7 @@ router.get("/:id",auth, async (req,res) => {
     }
 })
 
-router.get("/manager",auth, async (req,res) => {
+router.get("/service/manager",auth, async (req,res) => {
     try{
         const bRoom = await BookService.find();       
         res.json(bRoom);

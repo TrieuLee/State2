@@ -30,9 +30,9 @@ router.get("/:id",auth, async (req,res) => {
     }
 })
 
-router.get("/manager",auth, async (req,res) => {
+router.get("/room/manager",auth, async (req,res) => {
     try{
-        const bRoom = await BookRoom.find({});       
+        const bRoom = await BookRoom.find();       
         res.json(bRoom);
     }
     catch(err){
